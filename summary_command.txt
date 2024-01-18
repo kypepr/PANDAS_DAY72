@@ -1,0 +1,107 @@
+Pandas Summary
+
+data = pd.read_csv('./data/colors.csv')
+data['name'].nunique() #number of unique records
+
+data.is_trans.value_counts()  #calculate number of record in "is_trans" column
+
+
+dataset.iloc[[9521,9534]][["name","year"]]  # take row number 9521 and 9534; show column name and year
+
+dataset.sort_values(by="num_parts",ascending=False).head()  # sort column num_part descending
+
+
+#shift + tab to show document
+#dir(dataset) : to show all method available
+
+# check list method in pd which contain "series" word
+[x for x in dir(pd) if 'series' in x.lower()]
+
+
+
+#adjust NA value to 0
+reshaped_df = reshaped_df.fillna(0) 
+reshaped_df.fillna(0, inplace=True)
+
+#create graph
+plt.plot(reshaped_df.index,reshaped_df["java"]) 
+
+import matplotlib.pyplot as plt
+
+#some matplotlib config options
+
+plt.figure(figsize=(16,10)) 
+
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+
+plt.xlabel('Date', fontsize=14)
+plt.ylabel('Number of Posts', fontsize=14)
+plt.ylim(0, 35000)
+
+
+plt.plot(reshaped_df.index, reshaped_df.java)
+
+
+#multiple column y categories in chart
+for column in reshaped_df.columns:
+    plt.plot(reshaped_df.index, reshaped_df[column])
+
+# The window is number of observations that are averaged
+roll_df = reshaped_df.rolling(window=6).mean()
+
+# create line in plot if needed
+#plt.plot(sets_by_year.index,sets_by_year.to_list())
+plt.plot(sets_by_year.index,sets_by_year.values)
+plt.plot([2000 for x in range(0,800,100)],[x for x in range(0,800,100)])
+
+# plot the roll_df instead
+for column in roll_df.columns:
+    plt.plot(roll_df.index, roll_df[column], 
+             linewidth=3, label=roll_df[column].name)
+
+dataset.iloc[:-2] # takeout the last 2 index/row
+
+
+# aggregate group by : count distint, count and sum; other option is max, dll
+
+dataset.groupby('year').agg({'name':pd.Series.nunique,'theme_id':'count','num_parts':'sum'})
+
+
+#create multiple axis chart
+
+
+ax1 = plt.gca() # get current axis
+ax2 = ax1.twinx() # get another axis that shares the same x-axis
+
+ax1.plot(new_data.index,new_data["num_parts"],color='g')
+ax2.plot(sets_by_year.index,sets_by_year.values,'b')
+
+ax1.set_xlabel('Year')
+ax1.set_ylabel('NUM_PARTS',color='green')
+ax2.set_ylabel('NAMES',color='blue')
+
+
+# scatter plot
+
+plt.scatter(sets_by_year.index,sets_by_year.values)
+ax2.scatter(sets_by_year.index,sets_by_year.values)
+
+
+# merge 2 table dataset and themes, with key join theme_id
+merged_df = pd.merge(dataset,themes,on="theme_id")
+
+# rename column name
+dataset = dataset.rename(columns={'num_parts':'total_parts'})
+
+
+
+# bar plot, with Series in the first 10 index and values
+
+plt.bar(theme_name_summ.index[:10],theme_name_summ.values[:10])
+
+plt.figure(figsize=(14,8))
+plt.xticks(fontsize=14, rotation=45)
+plt.yticks(fontsize=14)
+plt.ylabel('Nr of Sets', fontsize=14)
+plt.xlabel('Theme Name', fontsize=14)
