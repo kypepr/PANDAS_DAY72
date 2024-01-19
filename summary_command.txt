@@ -82,6 +82,79 @@ ax1.set_ylabel('NUM_PARTS',color='green')
 ax2.set_ylabel('NAMES',color='blue')
 
 
+#additional styling for chart
+
+# increases size and resolution
+plt.figure(figsize=(14,8), dpi=120) 
+plt.title('Tesla Web Search vs Price', fontsize=18)
+ 
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+ 
+# Also, increase fontsize and linewidth for larger charts
+ax1.set_ylabel('TSLA Stock Price', color='#E6232E', fontsize=14)
+ax2.set_ylabel('Search Trend', color='skyblue', fontsize=14)
+ 
+ax1.plot(df_tesla.MONTH, df_tesla.TSLA_USD_CLOSE, color='#E6232E', linewidth=3)
+ax2.plot(df_tesla.MONTH, df_tesla.TSLA_WEB_SEARCH, color='skyblue', linewidth=3)
+ 
+# Displays chart explicitly
+#plt.show()
+---------------------------
+
+plt.figure(figsize=(14,8), dpi=120)
+plt.title('Tesla Web Search vs Price', fontsize=18)
+ 
+# Increase the size and rotate the labels on the x-axis
+plt.xticks(fontsize=14, rotation=45)
+ 
+plt.figure(figsize=(14,8), dpi=120)
+plt.title('Tesla Web Search vs Price', fontsize=18)
+ 
+# Increase the size and rotate the labels on the x-axis
+plt.xticks(fontsize=14, rotation=45)
+ 
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+ 
+ax1.set_ylabel('TSLA Stock Price', color='#E6232E', fontsize=14)
+ax2.set_ylabel('Search Trend', color='skyblue', fontsize=14)
+ 
+# Set the minimum and maximum values on the axes
+ax1.set_ylim([0, 600])
+ax1.set_xlim([df_tesla.MONTH.min(), df_tesla.MONTH.max()])
+#ax2.set_ylim([0, 30])
+ 
+ax1.plot(df_tesla.MONTH, df_tesla.TSLA_USD_CLOSE, color='#E6232E', linewidth=3)
+ax2.plot(df_tesla.MONTH, df_tesla.TSLA_WEB_SEARCH, color='skyblue', linewidth=3)
+ 
+plt.show()
+
+
+
+#locator 
+
+import matplotlib.dates as mdates
+
+years = mdates.YearLocator()
+months = mdates.MonthLocator()
+years_fmt = mdates.DateFormatter('%Y')
+
+#format the ticks
+
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_minor_locator(months)    
+    
+# Experiment with the linestyle and markers
+ax1.plot(df_btc_monthly.index, df_btc_monthly.CLOSE, 
+         color='#F08F2E', linewidth=3, linestyle='--',marker='^')
+ax2.plot(df_btc_monthly.index, df_btc_search.BTC_NEWS_SEARCH, 
+         color='skyblue', linewidth=3, marker='o')
+
+# Show the grid lines as dark grey lines
+ax1.grid(color='grey', linestyle='--')
+
 # scatter plot
 
 plt.scatter(sets_by_year.index,sets_by_year.values)
@@ -105,3 +178,47 @@ plt.xticks(fontsize=14, rotation=45)
 plt.yticks(fontsize=14)
 plt.ylabel('Nr of Sets', fontsize=14)
 plt.xlabel('Theme Name', fontsize=14)
+
+
+#check missing value
+df_tesla.isna().values.any()  #return True or False
+
+df_tesla.isna().values.sum()  #return total missing value
+
+df_btc_price[df_btc_price["CLOSE"].isna()] # return specific row with missing value
+
+df_btc_price = df_btc_price.dropna() #removing missing value
+df_btc_price.dropna(inplace=True)
+
+
+df_tesla.describe()
+
+TSLA_WEB_SEARCH	TSLA_USD_CLOSE
+count	124.000000	124.000000
+mean	8.725806	50.962145
+std	5.870332	65.908389
+min	2.000000	3.896000
+25%	3.750000	7.352500
+50%	8.000000	44.653000
+75%	12.000000	58.991999
+max	31.000000	498.320007
+
+
+df_tesla.TSLA_WEB_SEARCH.max()
+df_tesla.TSLA_WEB_SEARCH.min()
+
+
+#convert string to datetime object 
+
+df_tesla.MONTH = pd.to_datetime(df_tesla.MONTH)
+df_btc_search.MONTH = pd.to_datetime(df_btc_search.MONTH)
+
+#resample from daily to monthly
+
+df_btc_monthly = df_btc_price.resample('M', on='DATE').last()  # take the last date data for monthly
+df_btc_monthly = df_btc_price.resample('M', on='DATE').mean() # take the average date data for monthly
+
+roll_df = df_unemployment[['UE_BENEFITS_WEB_SEARCH', 'UNRATE']].rolling(window=6).mean()
+
+
+
