@@ -220,5 +220,265 @@ df_btc_monthly = df_btc_price.resample('M', on='DATE').mean() # take the average
 
 roll_df = df_unemployment[['UE_BENEFITS_WEB_SEARCH', 'UNRATE']].rolling(window=6).mean()
 
+#@@@@ DAY 75 
+
+
+df_apps.sample(5) #take random sample from pandas
+
+
+# Show numeric output in decimal format e.g., 2.15
+pd.options.display.float_format = '{:,.2f}'.format
+
+# remove unused column
+df_apps.drop(["Last_Updated ","Android_Ver"],axis=1,inplace=True)
+
+
+# check duplicated row
+duplicated_rows = df_apps_clean[df_apps_clean.duplicated()]
+
+# remove duplicates based on subset values
+df_apps_clean = df_apps_clean.drop_duplicates(subset=['App','Type','Price'])
+
+#calculate number of counts in content rating column
+df_apps_clean["Content_Rating"].value_counts()
+
+
+# check data type
+
+df_apps_clean.Installs.describe()
+
+df_apps_clean.info()
+
+# convert string to number
+df_apps_clean.Installs = df_apps_clean.Installs.astype(str).str.replace(',', "")
+df_apps_clean.Installs = pd.to_numeric(df_apps_clean.Installs)
+df_apps_clean[['App', 'Installs']].groupby('Installs').count()
+
+# filtering condition in pandas
+df_apps_clean = df_apps_clean[df_apps_clean['Price'] < 250]
+df_apps_clean.sort_values('Price', ascending=False).head(5)
+
+# multiple 2 column pandas
+df_apps_clean['Revenue_Estimate'] = df_apps_clean.Installs.mul(df_apps_clean.Price)
+df_apps_clean.sort_values('Revenue_Estimate', ascending=False)[:10]
+
+
+
+# pie chart plotly
+import pandas as pd
+import plotly.express as px
+
+fig = px.pie(labels=rating.index,values=rating.values)
+fig.show()
+
+
+
+fig = px.pie(labels=ratings.index,
+values=ratings.values,
+title="Content Rating",
+names=ratings.index,
+)
+fig.update_traces(textposition='outside', textinfo='percent+label')
+ 
+fig.show()
+
+# count values events in particular column
+top10_category = df_apps_clean.Category.value_counts()[:10]
+
+#bar chart in plotly
+top10_category = df_apps_clean.Category.value_counts()[:10]
+
+bar = px.bar(x = top10_category.index, # index = category name
+             y = top10_category.values)
+ 
+bar.show()
+
+# additional option for bar chart plotly
+
+h_bar = px.bar(x = category_installs.Installs,
+               y = category_installs.index,
+               orientation='h',
+               title='Category Popularity')
+ 
+h_bar.update_layout(xaxis_title='Number of Downloads', yaxis_title='Category')
+h_bar.show()
+
+# addtional bar chart parameter optios
+bar = px.bar(x = num_genres.index[:15], # index = category name
+             y = num_genres.values[:15], # count
+             title='Top Genres',
+             hover_name=num_genres.index[:15],
+             color=num_genres.values[:15],
+             color_continuous_scale='Agsunset')
+ 
+bar.update_layout(xaxis_title='Genre',
+yaxis_title='Number of Apps',
+coloraxis_showscale=False)
+ 
+bar.show()
+
+# addtional bar chart parameter optios
+
+g_bar = px.bar(df_free_vs_paid,
+               x='Category',
+               y='App',
+               title='Free vs Paid Apps by Category',
+               color='Type',
+               barmode='group')
+ 
+g_bar.update_layout(xaxis_title='Category',
+                    yaxis_title='Number of Apps',
+                    xaxis={'categoryorder':'total descending'},
+                    yaxis=dict(type='log'))
+ 
+g_bar.show()
+
+
+# box plot
+box = px.box(df_apps_clean,
+             y='Installs',
+             x='Type',
+             color='Type',
+             notched=True,
+             points='all',
+             title='How Many Downloads are Paid Apps Giving Up?')
+ 
+box.update_layout(yaxis=dict(type='log'))
+ 
+box.show()
+
+
+# other parameter options for box plot
+
+df_paid_apps = df_apps_clean[df_apps_clean['Type'] == 'Paid']
+box = px.box(df_paid_apps, 
+             x='Category', 
+             y='Revenue_Estimate',
+             title='How Much Can Paid Apps Earn?')
+ 
+box.update_layout(xaxis_title='Category',
+                  yaxis_title='Paid App Ballpark Revenue',
+                  xaxis={'categoryorder':'min ascending'},
+                  yaxis=dict(type='log'))
+ 
+ 
+box.show()
+
+
+
+
+# scatter plot plotly
+cat_number = df_apps_clean.groupby('Category').agg({'App': pd.Series.count})
+
+cat_merged_df = pd.merge(cat_number, category_installs, on='Category', how="inner")
+print(f'The dimensions of the DataFrame are: {cat_merged_df.shape}')
+cat_merged_df.sort_values('Installs', ascending=False)
+
+scatter = px.scatter(cat_merged_df, # data
+                    x='App', # column name
+                    y='Installs',
+                    title='Category Concentration',
+                    size='App',
+                    hover_name=cat_merged_df.index,
+                    color='Installs')
+ 
+scatter.update_layout(xaxis_title="Number of Apps (Lower=More Concentrated)",
+                      yaxis_title="Installs",
+                      yaxis=dict(type='log'))
+ 
+scatter.show()
+
+
+
+# Split the strings on the semi-colon and then .stack them.
+stack = df_apps_clean.Genres.str.split(';', expand=True).stack()
+print(f'We now have a single column with shape: {stack.shape}')
+num_genres = stack.value_counts()
+print(f'Number of genres: {len(num_genres)}')
+
+
+# group by as index=False
+
+df_free_vs_paid = df_apps_clean.groupby(["Category", "Type"], as_index=False).agg({'App': pd.Series.count})
+df_free_vs_paid.head()
+
+
+
+#@@@@@@@@@DAY 76
+
+
+my_array.ndim  #show dimensions of an array
+
+array_2d[1,2]  # row number 2 and column number 3.. please note, it starts from 0
+
+array_2d[0,:]  # row number 1 and all column values will be shown
+
+
+a = np.arange(10,30,1) # create array a, start with 10, end with 30, step by 1 number [10 11 12 dst ...]
+
+
+#tensor is referred as an array of 3 dimensions (or higher)
+
+
+a[0:len(a):2]  # numpy slicer, 0= start; len(a) = end; 2 is step. better use : a[0::2]
+
+a[-3:] # slice to the last 3 values
+
+
+a[12:]	# # All the values except the first 12:
+
+a[::2] # every second value (i.e., all the even values in our case)
+
+
+np.flip(a)  # to reverse the order of array
+
+a[::-1] # other option to reveres the order of array
+
+nz_indices = np.nonzero(b)  # index from non-zero value in array
+
+
+# generate random array
+from numpy.random import random
+z = random((3,3,3))
+z
+
+# create array with size =9 and value from 0 and 100
+numpy.linspace(0,100,9)
+
+noise = np.random.random((128,128,3))
+print(noise.shape)
+plt.imshow(noise)
+
+#matrix multiplication
+np.matmul(a1,b1)
+img_gray = sRGB_array @ grey_vals # other option for matrix multiplication using @
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from scipy import misc
+from PIL import Image
+
+sRGB_array = img / 255
+grey_vals = np.array([0.2126, 0.7152, 0.0722])
+
+
+img_gray = sRGB_array @ grey_vals
+img_gray = np.matmul(sRGB_array, grey_vals)b
+
+plt.imshow(img_gray, cmap='gray')
+
+
+np.flip(img_gray)  # flip array 
+
+np.rot90(img)  # rotate 90 degree
+
+
+# open an image
+
+my_img = Image.open(file_name)
+img_array = np.array(my_img)
+
 
 
