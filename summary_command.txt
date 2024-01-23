@@ -623,4 +623,470 @@ print(f'The estimated revenue for a $350 film is around ${revenue_estimate:.10}.
 
 
 
+df_data.isna().sum()  # find total NA breakdown per column
+
+# NaN values for birth date are all organisations
+col_subset = ['year','category', 'laureate_type',
+              'birth_date','full_name', 'organization_name']
+df_data.loc[df_data.birth_date.isna()][col_subset]
+
+# NaN values for birth date are all organisations
+col_subset = ['year','category', 'laureate_type',
+              'birth_date','full_name', 'organization_name']
+df_data.loc[df_data.birth_date.isna()][col_subset]
+
+
+df_data["birth_date"] = pd.to_datetime(df_data.birth_date)
+
+
+# doughnut chart with plotly
+
+biology = df_data.sex.value_counts()
+fig = px.pie(labels=biology.index, 
+             values=biology.values,
+             title="Percentage of Male vs. Female Winners",
+             names=biology.index,
+             hole=0.4,)
+ 
+fig.update_traces(textposition='inside', textfont_size=15, textinfo='percent')
+ 
+fig.show()
+
+
+
+#the repeat winner. (keep= False means keep all duplicate as TRUE)
+is_winner = df_data.duplicated(subset=['full_name'], keep=False)
+multiple_winners = df_data[is_winner]
+print(f'There are {multiple_winners.full_name.nunique()}' \
+      ' winners who weere awarded the prize more than once.')
+
+
+# selected column in DataFrame
+
+col_subset = ['year', 'category', 'laureate_type', 'full_name']
+multiple_winners[col_subset]
+
+
+# bar chart plotly
+
+v_bar_split = px.bar(x = cat_men_women.category,
+                     y = cat_men_women.prize,
+                     color = cat_men_women.sex,
+                     title='Number of Prizes Awarded per Category split by Men and Women')
+ 
+v_bar_split.update_layout(xaxis_title='Nobel Prize Category', 
+                          yaxis_title='Number of Prizes')
+v_bar_split.show()
+
+
+# calculate the 5-year moving average we use .
+moving_average = prize_per_year.rolling(window=5).mean()
+
+
+# combine scatter and plot chart
+
+plt.figure(figsize=(16,8), dpi=200)
+plt.title('Number of Nobel Prizes Awarded per Year', fontsize=18)
+plt.yticks(fontsize=14)
+plt.xticks(ticks=np.arange(1900, 2021, step=5), 
+           fontsize=14, 
+           rotation=45)
+ 
+ax = plt.gca() # get current axis
+ax.set_xlim(1900, 2020)
+ 
+ax.scatter(x=prize_per_year.index, 
+           y=prize_per_year.values, 
+           c='dodgerblue',
+           alpha=0.7,
+           s=100,)
+ 
+ax.plot(prize_per_year.index, 
+        moving_average.values, 
+        c='crimson', 
+        linewidth=3,)
+ 
+plt.show()
+
+# bar chart horizontal
+
+h_bar = px.bar(x=top20_countries.prize,
+               y=top20_countries.birth_country_current,
+               orientation='h',
+               color=top20_countries.prize,
+               color_continuous_scale='Viridis',
+               title='Top 20 Countries by Number of Prizes')
+ 
+h_bar.update_layout(xaxis_title='Number of Prizes', 
+                    yaxis_title='Country',
+                    coloraxis_showscale=False)
+h_bar.show()
+
+### Displaying the data on a Map
+
+df_countries = df_data.groupby(['birth_country_current', 'ISO'], 
+                               as_index=False).agg({'prize': pd.Series.count})
+df_countries.sort_values('prize', ascending=False)
+
+#Displaying data on Map
+
+
+
+world_map = px.choropleth(df_countries,
+                          locations='ISO',
+                          color='prize', 
+                          hover_name='birth_country_current', 
+                          color_continuous_scale=px.colors.sequential.matter)
+ 
+world_map.update_layout(coloraxis_showscale=True,)
+ 
+world_map.show()
+
+
+# Country Prize over time
+
+
+prize_by_year = df_data.groupby(by=['birth_country_current', 'year'], as_index=False).count()
+prize_by_year = prize_by_year.sort_values('year')[['year', 'birth_country_current', 'prize']]
+
+cumulative_prizes = prize_by_year.groupby(by=['birth_country_current',
+                                              'year']).sum().groupby(level=[0]).cumsum()
+cumulative_prizes.reset_index(inplace=True) 
+
+# Bar Chart plotly
+
+top20_cities = df_data.birth_city.value_counts()[:20]
+top20_cities.sort_values(ascending=True, inplace=True)
+city_bar = px.bar(x=top20_cities.values,
+                  y=top20_cities.index,
+                  orientation='h',
+                  color=top20_cities.values,
+                  color_continuous_scale=px.colors.sequential.Plasma,
+                  title='Where were the Nobel Laureates Born?')
+ 
+city_bar.update_layout(xaxis_title='Number of Prizes', 
+                       yaxis_title='City of Birth',
+                       coloraxis_showscale=False)
+city_bar.show()
+
+# sunburst chart plotly
+
+burst = px.sunburst(country_city_org, 
+                    path=['organization_country', 'organization_city', 'organization_name'], 
+                    values='prize',
+                    title='Where do Discoveries Take Place?',
+                   )
+ 
+burst.update_layout(xaxis_title='Number of Prizes', 
+                    yaxis_title='City',
+                    coloraxis_showscale=False)
+ 
+burst.show()
+
+#date year discrepancy
+# Use Datetime object
+birth_years = df_data.birth_date.dt.year
+birth_years = pd.to_datetime(df_data.birth_date).dt.year
+
+df_data['winning_age'] = df_data.year - birth_years
+df_data.winning_age
+
+# histogram seaborn
+
+plt.figure(figsize=(8, 4), dpi=200)
+sns.histplot(data=df_data,
+             x=df_data.winning_age,
+             bins=30)
+plt.xlabel('Age')
+plt.title('Distribution of Age on Receipt of Prize')
+plt.show()
+
+# regplot seaborn
+plt.figure(figsize=(8,4), dpi=200)
+with sns.axes_style("whitegrid"):
+    sns.regplot(data=df_data,
+                x='year',
+                y='winning_age',
+                lowess=True, 
+                scatter_kws = {'alpha': 0.4},
+                line_kws={'color': 'black'})
+ 
+plt.show()
+
+
+# boxplot seaborn
+
+plt.figure(figsize=(8,4), dpi=200)
+with sns.axes_style("whitegrid"):
+    sns.boxplot(data=df_data,
+                x='category',
+                y='winning_age')
+ 
+plt.show()
+
+# scatter plot with regresion line, breakdown per category in different chart
+
+
+with sns.axes_style('whitegrid'):
+    sns.lmplot(data=df_data,
+               x='year', 
+               y='winning_age',
+               row = 'category',
+               lowess=True, 
+               aspect=2,
+               scatter_kws = {'alpha': 0.6},
+               line_kws = {'color': 'black'},)
+ 
+plt.show()
+
+# scatter plot with regresion line, combine per category in 1 chart (the different is hue parameter)
+
+with sns.axes_style("whitegrid"):
+    sns.lmplot(data=df_data,
+               x='year',
+               y='winning_age',
+               hue='category',
+               lowess=True, 
+               aspect=2,
+               scatter_kws={'alpha': 0.5},
+               line_kws={'linewidth': 5})
+ 
+plt.show()
+
+##@ Day 80 #######3
+
+
+
+
+# notebook presentation
+
+pd.options.display.float_format = '{:,.2f}'.format
+
+# Create locators for ticks on the time axis
+
+
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
+# create line chart with matplotlib
+
+# Create locators for ticks on the time axis
+
+years = mdates.YearLocator()
+months = mdates.MonthLocator()
+years_fmt = mdates.DateFormatter('%Y') 
+
+#We can then use the locators in our chart:
+
+plt.figure(figsize=(14,8), dpi=200)
+plt.title('Total Number of Monthly Births and Deaths', fontsize=18)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14, rotation=45)
+ 
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+ 
+ax1.set_ylabel('Births', color='skyblue', fontsize=18)
+ax2.set_ylabel('Deaths', color='crimson', fontsize=18)
+ 
+# Use Locators
+ax1.set_xlim([df_monthly.date.min(), df_monthly.date.max()])
+ax1.xaxis.set_major_locator(years)
+ax1.xaxis.set_major_formatter(years_fmt)
+ax1.xaxis.set_minor_locator(months)
+ 
+ax1.grid(color='grey', linestyle='--')
+ 
+ax1.plot(df_monthly.date, 
+         df_monthly.births, 
+         color='skyblue', 
+         linewidth=3)
+ 
+ax2.plot(df_monthly.date, 
+         df_monthly.deaths, 
+         color='crimson', 
+         linewidth=2, 
+         linestyle='--')
+ 
+plt.show()
+
+
+# create line chart with plotly
+
+line = px.line(df_yearly, 
+               x='year', 
+               y='deaths',
+               color='clinic',
+               title='Total Yearly Deaths by Clinic')
+ 
+line.show()
+
+# multiple 3 line chart using plotly and indexing the date for rolling average
+
+
+df_monthly['pct_deaths'] = df_monthly.deaths/df_monthly.births
+
+# Date when handwashing was made mandatory
+handwashing_start = pd.to_datetime('1847-06-01')
+
+before_washing = df_monthly[df_monthly.date < handwashing_start]
+after_washing = df_monthly[df_monthly.date >= handwashing_start]
+
+bw_rate = before_washing.deaths.sum() / before_washing.births.sum() * 100
+aw_rate = after_washing.deaths.sum() / after_washing.births.sum() * 100
+print(f'Average death rate before 1847 was {bw_rate:.4}%')
+print(f'Average death rate AFTER 1847 was {aw_rate:.3}%')
+
+
+roll_df = before_washing.set_index('date')
+roll_df = roll_df.rolling(window=6).mean()
+
+
+
+plt.figure(figsize=(14,8), dpi=200)
+plt.title('Percentage of Monthly Deaths over Time', fontsize=18)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14, rotation=45)
+ 
+plt.ylabel('Percentage of Deaths', color='crimson', fontsize=18)
+ 
+ax = plt.gca()
+ax.xaxis.set_major_locator(years)
+ax.xaxis.set_major_formatter(years_fmt)
+ax.xaxis.set_minor_locator(months)
+ax.set_xlim([df_monthly.date.min(), df_monthly.date.max()])
+ 
+plt.grid(color='grey', linestyle='--')
+ 
+ma_line, = plt.plot(roll_df.index, 
+                    roll_df.pct_deaths, 
+                    color='crimson', 
+                    linewidth=3, 
+                    linestyle='--',
+                    label='6m Moving Average')
+bw_line, = plt.plot(before_washing.date, 
+                    before_washing.pct_deaths,
+                    color='black', 
+                    linewidth=1, 
+                    linestyle='--', 
+                    label='Before Handwashing')
+aw_line, = plt.plot(after_washing.date, 
+                    after_washing.pct_deaths, 
+                    color='skyblue', 
+                    linewidth=3, 
+                    marker='o',
+                    label='After Handwashing')
+ 
+plt.legend(handles=[ma_line, bw_line, aw_line],
+           fontsize=18)
+ 
+plt.show()
+
+#numpy where command
+df_monthly['washing_hands'] = np.where(df_monthly.date < handwashing_start, 'No', 'Yes')
+
+# box plot wiht plotly
+
+box = px.box(df_monthly, 
+             x='washing_hands', 
+             y='pct_deaths',
+             color='washing_hands',
+             title='How Have the Stats Changed with Handwashing?')
+ 
+box.update_layout(xaxis_title='Washing Hands?',
+                  yaxis_title='Percentage of Monthly Deaths',)
+ 
+box.show()
+
+
+
+# histogram with plotly
+
+import plotly.express as px
+df = px.data.tips()
+fig = px.histogram(df, x="total_bill")
+fig.show()
+
+
+
+### Testing for statistical significance
+
+# histogram with plotpy. marginal just for fun to add box on the top of histogram chart. histnorm value to percent to make time periods comparable 
+
+hist = px.histogram(df_monthly, 
+                   x='pct_deaths', 
+                   color='washing_hand',
+                   nbins=30,
+                   opacity=0.6,
+                   barmode='overlay',
+                   histnorm='percent',
+                   marginal='box',)
+ 
+hist.update_layout(xaxis_title='Proportion of Monthly Deaths',
+                   yaxis_title='Count',)
+ 
+hist.show()
+
+
+
+# kernel density estimate (KDE)
+plt.figure(dpi=200)
+sns.kdeplot(before_washing.pct_deaths, 
+            shade=True,
+            clip=(0,1))
+sns.kdeplot(after_washing.pct_deaths, 
+            shade=True,
+            clip=(0,1))
+plt.title('Est. Distribution of Monthly Death Rate Before and After Handwashing')
+plt.xlim(0, 0.40)
+plt.show()
+
+# Use T-Test to show statistical significance
+
+import scipy.stats as stats
+t_stat, p_value = stats.ttest_ind(a=before_washing.pct_deaths, 
+                                  b=after_washing.pct_deaths)
+print(f'p-palue is {p_value:.10f}')
+print(f't-statstic is {t_stat:.4}')
+
+
+# additional
+
+# get matplotlib box plot data
+def get_box_plot_data(labels, bp):
+    rows_list = []
+    for i in range(len(labels)):
+        dict1 = {}
+        dict1['label'] = labels[i]
+        dict1['lower_whisker'] = bp['whiskers'][i*2].get_ydata()[1]
+        dict1['lower_quartile'] = bp['boxes'][i].get_ydata()[1]
+        dict1['median'] = bp['medians'][i].get_ydata()[1]
+        dict1['upper_quartile'] = bp['boxes'][i].get_ydata()[2]
+        dict1['upper_whisker'] = bp['whiskers'][(i*2)+1].get_ydata()[1]
+        rows_list.append(dict1)
+    return pd.DataFrame(rows_list)
+
+data1 = np.random.normal(loc = 0, scale = 1, size = 1000)
+data2 = np.random.normal(loc = 5, scale = 1, size = 1000)
+data3 = np.random.normal(loc = 10, scale = 1, size = 1000)
+labels = ['data1', 'data2', 'data3']
+bp = plt.boxplot([data1, data2, data3], labels=labels)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
